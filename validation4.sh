@@ -1,3 +1,4 @@
+#!/bin/bash
 echo "Please enter the ResourceGroup name"
 read rgname
 echo "please enter the cluster name"
