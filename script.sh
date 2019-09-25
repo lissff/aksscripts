@@ -115,3 +115,5 @@ echo "You have selected a wrong option"
 exit
 ;;
 esac
+
+exit 0
