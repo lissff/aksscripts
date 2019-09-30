@@ -6,3 +6,30 @@ It uses the shc_script_converter.sh (build using the following tool https://gith
 
 Any time the L200 lab scripts require an update the shc_script_converter.sh can be use to generate the new binaries.
 And after that the Dockerfile can be use to rebuild a new docker image.
+
+Here is the general usage for the image and l200labs tool:
+
+Run in docker
+```docker run -it sturrent/l200labs:latest```
+
+L200labs tool usage
+```
+$ l200labs -h
+l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-h|--help]
+
+Here is the list of current labs available:
+
+***************************************************************
+*        1. Node not ready
+*        2. Cluster is in failed state
+*        3. Cluster Scaling issue
+*        4. Problem with accessing dashboard
+*        5. Cluster unable to communicate with API server
+***************************************************************
+
+"-g|--resource-group" resource group name
+"-n|--name" AKS cluster name
+"-l|--lab" Lab scenario to deploy (5 possible options)
+"-v|--validate" Validate a particular scenario
+"-h|--help" help info
+```
