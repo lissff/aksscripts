@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # script name: l200labs.sh
-# Version v0.1.7 20190930
+# Version v0.2.0 20190930
 # Set of tools to deploy L200 Azure containers labs
 
 # "-g|--resource-group" resource group name
@@ -74,7 +74,7 @@ function check_resourcegroup_cluster () {
     then
         echo -e "\nCluster $CLUSTER_NAME already exists...\n"
         echo -e "Please remove that one before you can proceed with the lab.\n"
-        exit 8
+        exit 4
     fi
 }
 
@@ -84,7 +84,7 @@ function validate_cluster_exists () {
     if [ $CLUSTER_EXIST -ne 0 ]
     then
         echo -e "\nERROR: Cluster $CLUSTER_NAME in resource group $RESOURCE_GROUP does not exists...\n"
-        exit 8
+        exit 5
     fi
 }
 
@@ -123,7 +123,7 @@ function lab_scenario_1_validation () {
     if [ -z $LAB_TAG ]
     then
         echo -e "\nError: Cluster $CLUSTER_NAME in resource group $RESOURCE_GROUP was not created with this tool for lab $LAB_SCENARIO and cannot be validated...\n"
-        exit 5
+        exit 6
     elif [ $LAB_TAG -eq 1 ]
     then
         az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME &>/dev/null
@@ -135,7 +135,7 @@ function lab_scenario_1_validation () {
         fi
     else
         echo -e "\nError: Cluster $CLUSTER_NAME in resource group $RESOURCE_GROUP was not created with this tool for lab $LAB_SCENARIO and cannot be validated...\n"
-        exit 5
+        exit 6
     fi
 }
 
@@ -167,10 +167,10 @@ function lab_scenario_2_validation () {
     if [ -z $LAB_TAG ]
     then
         echo -e "\nError: Cluster $CLUSTER_NAME in resource group $RESOURCE_GROUP was not created with this tool for lab $LAB_SCENARIO and cannot be validated...\n"
-        exit 5
+        exit 6
     elif [ $LAB_TAG -eq $LAB_SCENARIO ]
     then
-        if $(az aks show -g labtest2 -n akslab2 --query provisioningState -o tsv | grep -q "Succeeded")
+        if $(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query provisioningState -o tsv | grep -q "Succeeded")
         then
             echo -e "\nCluster looks good now, the keyword for the assesment is:\n\nstopeffortsweet\n"
         else
@@ -178,7 +178,7 @@ function lab_scenario_2_validation () {
         fi
     else
         echo -e "\nError: Cluster $CLUSTER_NAME in resource group $RESOURCE_GROUP was not created with this tool for lab $LAB_SCENARIO and cannot be validated...\n"
-        exit 5
+        exit 6
     fi
 }
 
@@ -190,6 +190,7 @@ function lab_scenario_3 () {
     --node-count 1 \
     --generate-ssh-keys \
     --tag l200lab=${LAB_SCENARIO} \
+    -o table
 
     validate_cluster_exists
     NODE_RESOURCE_GROUP="$(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query nodeResourceGroup -o tsv)"
@@ -203,10 +204,11 @@ function lab_scenario_3 () {
     --access Deny \
     --protocol Tcp \
     --description "Deny to Internet." &> /dev/null
-    az aks scale -g $RESOURCE_GROUP -n $CLUSTER_NAME -c 2
+    az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME &>/dev/null
+    az aks scale -g $RESOURCE_GROUP -n $CLUSTER_NAME -c 2 &>/dev/null
     CLUSTER_URI="$(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query id -o tsv)"
-    echo "It seems the cluster is in failed state, please check the issue and resolve it appropriately"
-    echo -e "Cluster uri == ${CLUSTER_URI}\n"
+    echo "Cluster is missing a node after scale action, please check the issue and resolve it appropriately"
+    echo -e "\nCluster uri == ${CLUSTER_URI}\n"
 }
 
 function lab_scenario_3_validation () {
@@ -215,10 +217,11 @@ function lab_scenario_3_validation () {
     if [ -z $LAB_TAG ]
     then
         echo -e "\nError: Cluster $CLUSTER_NAME in resource group $RESOURCE_GROUP was not created with this tool for lab $LAB_SCENARIO and cannot be validated...\n"
-        exit 5
+        exit 6
     elif [ $LAB_TAG -eq $LAB_SCENARIO ]
     then
-        if $(az aks show -g labtest2 -n akslab2 --query provisioningState -o tsv | grep -q "Succeeded")
+        az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME &>/dev/null
+        if [ "$(kubectl get no | grep Ready | wc -l)" -ge 2 ]
         then
             echo -e "\nCluster looks good now, the keyword for the assesment is:\n\nnorthernjumpaway\n"
         else
@@ -226,7 +229,89 @@ function lab_scenario_3_validation () {
         fi
     else
         echo -e "\nError: Cluster $CLUSTER_NAME in resource group $RESOURCE_GROUP was not created with this tool for lab $LAB_SCENARIO and cannot be validated...\n"
-        exit 5
+        exit 6
+    fi
+}
+
+# Lab scenario 4
+function lab_scenario_4 () {
+    az aks create \
+    --resource-group $RESOURCE_GROUP \
+    --name $CLUSTER_NAME \
+    --node-count 1 \
+    --generate-ssh-keys \
+    --tag l200lab=${LAB_SCENARIO} \
+    -o table
+
+    validate_cluster_exists
+    CLUSTER_URI="$(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query id -o tsv)"
+    echo -e "\n\nPlease try using kubernetes dashboard and try to create a pod called nginx in test namespace using the dashboard\n"
+    echo -e "\nCluster uri == ${CLUSTER_URI}\n"
+}
+
+function lab_scenario_4_validation () {
+    validate_cluster_exists
+    LAB_TAG="$(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query tags.l200lab -o tsv)"
+    if [ -z $LAB_TAG ]
+    then
+        echo -e "\nError: Cluster $CLUSTER_NAME in resource group $RESOURCE_GROUP was not created with this tool for lab $LAB_SCENARIO and cannot be validated...\n"
+        exit 6
+    elif [ $LAB_TAG -eq $LAB_SCENARIO ]
+    then
+        kubectl get clusterrolebinding -n kube-system | grep -i dashboard &>/dev/null
+        if [ $? -eq 0 ]
+        then
+            echo -e "\nYou should be able to access the $CLUSTER_NAME cluster dashboard, the keyword for the assesment is:\n\nbestkitchenplains\n"
+        else
+            echo -e "\nStill the dashboard issue persists\n"
+        fi
+    else
+        echo -e "\nError: Cluster $CLUSTER_NAME in resource group $RESOURCE_GROUP was not created with this tool for lab $LAB_SCENARIO and cannot be validated...\n"
+        exit 6
+    fi    
+}
+
+# Lab scenario 5
+function lab_scenario_5 () {
+    az aks create \
+    --resource-group $RESOURCE_GROUP \
+    --name $CLUSTER_NAME \
+    --node-count 1 \
+    --generate-ssh-keys \
+    --tag l200lab=${LAB_SCENARIO} \
+    -o table
+
+    validate_cluster_exists
+    az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME &>/dev/null
+    NODE_RESOURCE_GROUP="$(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query nodeResourceGroup -o tsv)"
+    VNET_NAME="$(az network vnet list -g $RESOURCE_GROUP --query [0].name -o tsv)"
+    az network vnet update -g $NODE_RESOURCE_GROUP -n $VNET_NAME --dns-servers 10.2.0.8 &>/dev/null
+    VM_NODE_0="$(az vm list -g $NODE_RESOURCE_GROUP --query [0].name -o tsv)"
+    az vm restart -g $NODE_RESOURCE_GROUP -n $VM_NODE_0 --no-wait
+    CLUSTER_URI="$(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query id -o tsv)"
+    echo -e "\n\nThere are issues with one node in NotReady\n"
+    echo -e "\nCluster uri == ${CLUSTER_URI}\n"
+}
+
+function lab_scenario_5_validation () {
+    validate_cluster_exists
+    LAB_TAG="$(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query tags.l200lab -o tsv)"
+    if [ -z $LAB_TAG ]
+    then
+        echo -e "\nError: Cluster $CLUSTER_NAME in resource group $RESOURCE_GROUP was not created with this tool for lab $LAB_SCENARIO and cannot be validated...\n"
+        exit 6
+    elif [ $LAB_TAG -eq $LAB_SCENARIO ]
+    then
+        az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME &>/dev/null
+        if [ "$(kubectl get no | grep Ready | wc -l)" -ge 1 ]
+        then
+            echo -e "\nCluster looks good now, the keyword for the assesment is:\n\namountdevicerose\n"
+        else
+            echo -e "\nScenario $LAB_SCENARIO is still FAILED\n"
+        fi
+    else
+        echo -e "\nError: Cluster $CLUSTER_NAME in resource group $RESOURCE_GROUP was not created with this tool for lab $LAB_SCENARIO and cannot be validated...\n"
+        exit 6
     fi
 }
 
@@ -253,13 +338,13 @@ fi
 if [ -z $RESOURCE_GROUP ]; then
 	echo -e "Error: Resource group value must be provided. \n"
 	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-h|--help]\n"
-	exit 5
+	exit 7
 fi
 
 if [ -z $CLUSTER_NAME ]; then
 	echo -e "Error: Cluster name value must be provided. \n"
 	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-h|--help]\n"
-	exit 6
+	exit 8
 fi
 
 if [ -z $LAB_SCENARIO ]; then
@@ -273,7 +358,14 @@ if [ -z $LAB_SCENARIO ]; then
 *\t 4. Problem with accessing dashboard
 *\t 5. Cluster unable to communicate with API server
 ***************************************************************\n"
-	exit 7
+	exit 9
+fi
+
+# lab scenario has a valid option
+if [[ ! $LAB_SCENARIO =~ ^[1-5]+$ ]];
+then
+    echo -e "\nError: invalid value for lab scenario '-l $LAB_SCENARIO'\nIt must be value from 1 to 5\n"
+    exit 10
 fi
 
 # main
@@ -281,7 +373,7 @@ echo -e "\nWelcome to the L200 Troubleshooting sessions
 ********************************************
 
 This tool will use your internal azure account to deploy the lab environment.
-Verifing if your authenticated already...\n"
+Verifing if you are authenticated already...\n"
 
 # Verify az cli has been authenticated
 az_login_check
@@ -313,8 +405,27 @@ elif [ $LAB_SCENARIO -eq 3 ] && [ $VALIDATE -eq 1 ]
 then
     lab_scenario_3_validation
 
+elif [ $LAB_SCENARIO -eq 4 ] && [ $VALIDATE -eq 0 ]
+then
+    check_resourcegroup_cluster
+    lab_scenario_4
+
+elif [ $LAB_SCENARIO -eq 4 ] && [ $VALIDATE -eq 1 ]
+then
+    lab_scenario_4_validation
+
+elif [ $LAB_SCENARIO -eq 5 ] && [ $VALIDATE -eq 0 ]
+then
+    check_resourcegroup_cluster
+    lab_scenario_5
+
+elif [ $LAB_SCENARIO -eq 5 ] && [ $VALIDATE -eq 1 ]
+then
+    lab_scenario_5_validation
+
 else
     echo -e "\nError: no valid option provided\n"
+    exit 11
 fi
 
 exit 0
