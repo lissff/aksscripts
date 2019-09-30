@@ -141,8 +141,12 @@ function lab_scenario_1_validation () {
 
 # Lab scenario 2
 function lab_scenario_2 () {
-    az network vnet create --name customvnetlab2  --resource-group  $RESOURCE_GROUP --address-prefixes 20.0.0.0/26  --subnet-name customsubnetlab2 --subnet-prefixes 20.0.0.0/26 &>/dev/null
-    VNET_ID=$(az network vnet show -g $RESOURCE_GROUP -n customvnetlab2 | grep subnet | grep subscriptions | cut -d: -f2 | cut -d"," -f 1 | cut -d" " -f2 | cut -d"\"" -f2)
+    az network vnet create --name customvnetlab2 \
+    --resource-group $RESOURCE_GROUP \
+    --address-prefixes 20.0.0.0/26 \
+    --subnet-name customsubnetlab2 \
+    --subnet-prefixes 20.0.0.0/26 &>/dev/null
+    VNET_ID="$(az network vnet show -g $RESOURCE_GROUP -n customvnetlab2 --query id -o tsv)"
     az aks create --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
     --generate-ssh-keys \
