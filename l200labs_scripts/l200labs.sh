@@ -146,13 +146,13 @@ function lab_scenario_2 () {
     --address-prefixes 20.0.0.0/26 \
     --subnet-name customsubnetlab2 \
     --subnet-prefixes 20.0.0.0/26 &>/dev/null
-    VNET_ID="$(az network vnet show -g $RESOURCE_GROUP -n customvnetlab2 --query id -o tsv)"
+    SUBNET_ID="$(az network vnet show -g $RESOURCE_GROUP -n customvnetlab2 --query subnets[0].id -o tsv)"
     az aks create --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
     --generate-ssh-keys \
     -c 1 -s Standard_B2ms \
     --network-plugin azure \
-    --vnet-subnet-id  $VNET_ID \
+    --vnet-subnet-id  $SUBNET_ID \
     --tag l200lab=${LAB_SCENARIO} \
     -o table
 
