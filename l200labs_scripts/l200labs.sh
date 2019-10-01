@@ -287,7 +287,7 @@ function lab_scenario_5 () {
 
     validate_cluster_exists
     NODE_RESOURCE_GROUP="$(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query nodeResourceGroup -o tsv)"
-    VNET_NAME="$(az network vnet list -g $RESOURCE_GROUP --query [0].name -o tsv)"
+    VNET_NAME="$(az network vnet list -g $NODE_RESOURCE_GROUP --query [0].name -o tsv)"
     echo -e "\nCompleting the lab setup..."
     az network vnet update -g $NODE_RESOURCE_GROUP -n $VNET_NAME --dns-servers 10.2.0.8 &>/dev/null
     VM_NODE_0="$(az vm list -g $NODE_RESOURCE_GROUP --query [0].name -o tsv)"
