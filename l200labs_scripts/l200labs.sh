@@ -308,7 +308,7 @@ function lab_scenario_5_validation () {
     elif [ $LAB_TAG -eq $LAB_SCENARIO ]
     then
         az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME &>/dev/null
-        if [ "$(kubectl get no | grep Ready | wc -l)" -ge 1 ]
+        if [ "$(kubectl get no | grep ' Ready' | wc -l)" -ge 1 ]
         then
             echo -e "\nCluster looks good now, the keyword for the assesment is:\n\namountdevicerose\n"
         else
