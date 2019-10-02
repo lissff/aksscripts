@@ -129,7 +129,7 @@ function lab_scenario_1_validation () {
         az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME &>/dev/null
         if $(kubectl get nodes | grep -q "NotReady")
         then
-            echo -e "\nScenario 1 is still FAILED\n"
+            echo -e "\nScenario $LAB_SCENARIO is still FAILED\n"
         else
             echo -e "\nCluster looks good now, the keyword for the assesment is:\n\nhometradebroke\n"
         fi
@@ -225,7 +225,7 @@ function lab_scenario_3_validation () {
     elif [ $LAB_TAG -eq $LAB_SCENARIO ]
     then
         az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME &>/dev/null
-        if [ "$(kubectl get no | grep Ready | wc -l)" -ge 2 ]
+        if [ "$(kubectl get no | grep ' Ready' | wc -l)" -ge 2 ]
         then
             echo -e "\nCluster looks good now, the keyword for the assesment is:\n\nnorthernjumpaway\n"
         else
@@ -308,11 +308,11 @@ function lab_scenario_5_validation () {
     elif [ $LAB_TAG -eq $LAB_SCENARIO ]
     then
         az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME &>/dev/null
-        if [ "$(kubectl get no | grep Ready | wc -l)" -ge 1 ]
+        if $(kubectl get nodes | grep -q "NotReady")
         then
-            echo -e "\nCluster looks good now, the keyword for the assesment is:\n\namountdevicerose\n"
-        else
             echo -e "\nScenario $LAB_SCENARIO is still FAILED\n"
+        else
+            echo -e "\nCluster looks good now, the keyword for the assesment is:\n\namountdevicerose\n"
         fi
     else
         echo -e "\nError: Cluster $CLUSTER_NAME in resource group $RESOURCE_GROUP was not created with this tool for lab $LAB_SCENARIO and cannot be validated...\n"
