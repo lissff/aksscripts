@@ -94,6 +94,7 @@ function lab_scenario_1 () {
     az aks create \
     --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
+    --vm-set-type AvailabilitySet \
     --node-count 3 \
     --generate-ssh-keys \
     --tag l200lab=${LAB_SCENARIO} \
@@ -148,6 +149,7 @@ function lab_scenario_2 () {
     SUBNET_ID="$(az network vnet show -g $RESOURCE_GROUP -n customvnetlab2 --query subnets[0].id -o tsv)"
     az aks create --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
+    --vm-set-type AvailabilitySet \
     --generate-ssh-keys \
     -c 1 -s Standard_B2ms \
     --network-plugin azure \
@@ -190,6 +192,7 @@ function lab_scenario_3 () {
     az aks create \
     --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
+    --vm-set-type AvailabilitySet \
     --node-count 1 \
     --generate-ssh-keys \
     --tag l200lab=${LAB_SCENARIO} \
@@ -242,6 +245,7 @@ function lab_scenario_4 () {
     --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
     --node-count 1 \
+    --vm-set-type AvailabilitySet \
     --generate-ssh-keys \
     --tag l200lab=${LAB_SCENARIO} \
     -o table
@@ -280,6 +284,7 @@ function lab_scenario_5 () {
     --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
     --node-count 1 \
+    --vm-set-type AvailabilitySet \
     --generate-ssh-keys \
     --tag l200lab=${LAB_SCENARIO} \
     -o table
