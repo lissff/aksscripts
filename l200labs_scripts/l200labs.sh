@@ -95,7 +95,6 @@ function lab_scenario_1 () {
     --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
     --node-count 3 \
-    --enable-addons monitoring \
     --generate-ssh-keys \
     --tag l200lab=${LAB_SCENARIO} \
     -o table
