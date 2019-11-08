@@ -111,7 +111,7 @@ function lab_scenario_1 () {
     az vm run-command invoke \
     -g $NODE_RESOURCE_GROUP \
     -n $VM_NODE_0 \
-    --command-id RunShellScript --scripts "sudo systemctl stop kubelet; sudo systemctl stop docker" &> /dev/null
+    --command-id RunShellScript --scripts "sudo systemctl stop kubelet; sudo systemctl disable kubelet; sudo systemctl stop docker" &> /dev/null
     CLUSTER_URI="$(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query id -o tsv)"
     echo -e "Please Log in to the corresponding node and check basic services like kubelet, docker etc...\n"
     echo -e "Cluster uri == ${CLUSTER_URI}\n"
@@ -265,6 +265,7 @@ function lab_scenario_4_validation () {
         exit 6
     elif [ $LAB_TAG -eq $LAB_SCENARIO ]
     then
+        az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME &>/dev/null
         kubectl get clusterrolebinding -n kube-system | grep -i dashboard &>/dev/null
         if [ $? -eq 0 ]
         then
