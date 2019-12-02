@@ -28,7 +28,7 @@ jobs:
       run: docker build . --file Dockerfile -t sturrent/l200labs:"${{ env.TAG_ID }}"
     - name: Push the tagged Docker image
       run: docker push sturrent/l200labs:"${{ env.TAG_ID }}"
-    - name: Build the latest Docker image
-      run: docker build . --file Dockerfile --tag sturrent/l200labs:latest
+    - name: Tag the latest Docker image
+      run: docker tag sturrent/l200labs:"${{ env.TAG_ID }}" sturrent/l200labs:latest
     - name: Push the latest Docker image
       run: docker push sturrent/l200labs:latest
