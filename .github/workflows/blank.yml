@@ -16,7 +16,7 @@ jobs:
         rm -f l200labs_binaries/*
         bash shc_script_converter.sh
     - name: Login to DockerHub Registry
-              run: echo $ | docker login -u $ --password-stdin
+      run: echo $ | docker login -u $ --password-stdin
     - name: Get the version
       id: vars
       run: echo ::set-output name=tag::$(echo ${GITHUB_REF:10})
