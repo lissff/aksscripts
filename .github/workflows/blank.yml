@@ -25,9 +25,9 @@ jobs:
     - name: Get the version
       run: TAG_ID="$(echo ${GITHUB_REF:10})"
     - name: Build the tagged Docker image
-      run: docker build . --file Dockerfile --tag sturrent/l200labs:${TAG_ID}
+      run: docker build . --file Dockerfile -t sturrent/l200labs:"${{ GITHUB_REF:10 }}"
     - name: Push the tagged Docker image
-      run: docker push sturrent/l200labs:${TAG_ID}
+      run: docker push sturrent/l200labs:"${{ GITHUB_REF:10 }}"
     - name: Build the latest Docker image
       run: docker build . --file Dockerfile --tag sturrent/l200labs:latest
     - name: Push the latest Docker image
