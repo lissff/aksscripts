@@ -333,7 +333,7 @@ then
 ***************************************************************
 *\t 1. Node not ready
 *\t 2. Cluster is in failed state
-*\t 3. Cluster Scaling issue, mising one node
+*\t 3. Cluster Scaling issue, missing one node
 *\t 4. Problem with accessing dashboard
 *\t 5. Cluster unable to communicate with API server
 ***************************************************************\n"
