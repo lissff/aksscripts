@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # script name: l200labs.sh
-# Version v0.2.0 20190930
+# Version v0.2.1 20191202
 # Set of tools to deploy L200 Azure containers labs
 
 # "-g|--resource-group" resource group name
@@ -213,7 +213,7 @@ function lab_scenario_3 () {
     az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME &>/dev/null
     az aks scale -g $RESOURCE_GROUP -n $CLUSTER_NAME -c 2 &>/dev/null
     CLUSTER_URI="$(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query id -o tsv)"
-    echo "Cluster is missing a node after scale action, please check the issue and resolve it appropriately"
+    echo "Cluster is missing a node after scale action (\"kubectl get nodes only shows\" 1 node), please check the issue and resolve it appropriately"
     echo -e "\nCluster uri == ${CLUSTER_URI}\n"
 }
 
@@ -333,7 +333,7 @@ then
 ***************************************************************
 *\t 1. Node not ready
 *\t 2. Cluster is in failed state
-*\t 3. Cluster Scaling issue
+*\t 3. Cluster Scaling issue, mising one node
 *\t 4. Problem with accessing dashboard
 *\t 5. Cluster unable to communicate with API server
 ***************************************************************\n"
