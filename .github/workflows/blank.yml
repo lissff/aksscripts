@@ -23,11 +23,11 @@ jobs:
     - name: Login to Docker Registry
       run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
     - name: Get the version
-      run: TAG_ID="$(echo ${GITHUB_REF:10})"
+      run: echo ::set-env name=TAG_ID::$(echo ${GITHUB_REF:10})
     - name: Build the tagged Docker image
-      run: docker build . --file Dockerfile -t sturrent/l200labs:"${{ GITHUB_REF:10 }}"
+      run: docker build . --file Dockerfile -t sturrent/l200labs:"${{ env.TAG_ID }}"
     - name: Push the tagged Docker image
-      run: docker push sturrent/l200labs:"${{ GITHUB_REF:10 }}"
+      run: docker push sturrent/l200labs:"${{ env.TAG_ID }}"
     - name: Build the latest Docker image
       run: docker build . --file Dockerfile --tag sturrent/l200labs:latest
     - name: Push the latest Docker image
