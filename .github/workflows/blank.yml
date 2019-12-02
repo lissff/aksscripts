@@ -11,6 +11,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Setup shc tool
+      run: |
+        apt-get update && apt-get install software-properties-common -y
+        add-apt-repository ppa:neurobin/ppa -y
+        apt-get update && apt-get install shc -y
     - name: Create new binary using script
       run: |
         rm -f l200labs_binaries/*
