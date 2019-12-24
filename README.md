@@ -16,14 +16,14 @@ Run in docker
 L200labs tool usage
 ```
 $ l200labs -h
-l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-h|--help]
+l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-r|--region] [-h|--help] [--version]
 
 Here is the list of current labs available:
 
 ***************************************************************
 *        1. Node not ready
 *        2. Cluster is in failed state
-*        3. Cluster Scaling issue
+*        3. Cluster Scaling issue, missing one node
 *        4. Problem with accessing dashboard
 *        5. Cluster unable to communicate with API server
 ***************************************************************
@@ -31,6 +31,8 @@ Here is the list of current labs available:
 "-g|--resource-group" resource group name
 "-n|--name" AKS cluster name
 "-l|--lab" Lab scenario to deploy (5 possible options)
+"-r|--region" region to create the resources
 "-v|--validate" Validate a particular scenario
+"--version" print version of l200labs
 "-h|--help" help info
 ```
