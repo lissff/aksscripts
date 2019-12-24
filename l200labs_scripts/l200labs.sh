@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # script name: l200labs.sh
-# Version v0.2.24 20191224
+# Version v0.2.25 20191224
 # Set of tools to deploy L200 Azure containers labs
 
 # "-g|--resource-group" resource group name
@@ -55,7 +55,7 @@ done
 # Variable definition
 SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
 SCRIPT_NAME="$(echo $0 | sed 's|\.\/||g')"
-SCRIPT_VERSION="Version v0.2.24 20191224"
+SCRIPT_VERSION="Version v0.2.25 20191224"
 
 # Funtion definition
 
@@ -74,7 +74,7 @@ function check_resourcegroup_cluster () {
     if [ $RG_EXIST -ne 0 ]
     then
         echo -e "\nCreating resource group ${RESOURCE_GROUP}...\n"
-        az group create --name $RESOURCE_GROUP --location eastus &>/dev/null
+        az group create --name $RESOURCE_GROUP --location $LOCATION &>/dev/null
     else
         echo -e "\nResource group $RESOURCE_GROUP already exists...\n"
     fi
