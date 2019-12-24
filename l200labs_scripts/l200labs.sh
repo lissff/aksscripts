@@ -1,25 +1,29 @@
 #!/bin/bash
 
 # script name: l200labs.sh
-# Version v0.2.1 20191202
+# Version v0.2.23 20191224
 # Set of tools to deploy L200 Azure containers labs
 
 # "-g|--resource-group" resource group name
 # "-n|--name" AKS cluster name
 # "-l|--lab" Lab scenario to deploy (5 possible options)
 # "-v|--validate" Validate a particular scenario
+# "-r|--region" region to deploy the resources
 # "-h|--help" help info
+# "--version" print version
 
 # read the options
-TEMP=`getopt -o g:n:l:hv --long resource-group:,name:,lab:,help,validate -n 'l200labs.sh' -- "$@"`
+TEMP=`getopt -o g:n:l:hrv --long resource-group:,name:,lab:,help,validate,version -n 'l200labs.sh' -- "$@"`
 eval set -- "$TEMP"
 
 # set an initial value for the flags
 RESOURCE_GROUP=""
 CLUSTER_NAME=""
 LAB_SCENARIO=""
+LOCATION="eastus2"
 VALIDATE=0
 HELP=0
+VERSION=0
 
 while true ;
 do
@@ -37,7 +41,12 @@ do
             "") shift 2;;
             *) LAB_SCENARIO="$2"; shift 2;;
             esac;;
+        -r|--region) case "$2" in
+            "") shift 2;;
+            *) LOCATION="$2"; shift 2;;
+            esac;;    
         -v|--validate) VALIDATE=1; shift;;
+        --version) VERSION=1; shift;;
         --) shift ; break ;;
         *) echo -e "Error: invalid argument\n" ; exit 3 ;;
     esac
@@ -46,6 +55,7 @@ done
 # Variable definition
 SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
 SCRIPT_NAME="$(echo $0 | sed 's|\.\/||g')"
+SCRIPT_VERSION="Version v0.2.23 20191224"
 
 # Funtion definition
 
@@ -94,6 +104,7 @@ function lab_scenario_1 () {
     az aks create \
     --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
+    --location $LOCATION \
     --vm-set-type AvailabilitySet \
     --node-count 3 \
     --generate-ssh-keys \
@@ -143,12 +154,14 @@ function lab_scenario_1_validation () {
 function lab_scenario_2 () {
     az network vnet create --name customvnetlab2 \
     --resource-group $RESOURCE_GROUP \
+    --location $LOCATION \
     --address-prefixes 20.0.0.0/26 \
     --subnet-name customsubnetlab2 \
     --subnet-prefixes 20.0.0.0/26 &>/dev/null
     SUBNET_ID="$(az network vnet show -g $RESOURCE_GROUP -n customvnetlab2 --query subnets[0].id -o tsv)"
     az aks create --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
+    --location $LOCATION \
     --vm-set-type AvailabilitySet \
     --generate-ssh-keys \
     -c 1 -s Standard_B2ms \
@@ -192,6 +205,7 @@ function lab_scenario_3 () {
     az aks create \
     --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
+    --location $LOCATION \
     --vm-set-type AvailabilitySet \
     --node-count 1 \
     --generate-ssh-keys \
@@ -244,6 +258,7 @@ function lab_scenario_4 () {
     az aks create \
     --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
+    --location $LOCATION \
     --node-count 1 \
     --vm-set-type AvailabilitySet \
     --generate-ssh-keys \
@@ -284,6 +299,7 @@ function lab_scenario_5 () {
     az aks create \
     --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
+    --location $LOCATION \
     --node-count 1 \
     --vm-set-type AvailabilitySet \
     --generate-ssh-keys \
@@ -328,7 +344,7 @@ function lab_scenario_5_validation () {
 #if -h | --help option is selected usage will be displayed
 if [ $HELP -eq 1 ]
 then
-	echo "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-h|--help]"
+	echo "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-r|--region] [-h|--help] [--version]"
     echo -e "\nHere is the list of current labs available:\n
 ***************************************************************
 *\t 1. Node not ready
@@ -340,26 +356,34 @@ then
     echo -e '"-g|--resource-group" resource group name
 "-n|--name" AKS cluster name
 "-l|--lab" Lab scenario to deploy (5 possible options)
+"-r|--region" region to create the resources
 "-v|--validate" Validate a particular scenario
+"--version" print version of l200labs
 "-h|--help" help info\n'
+	exit 0
+fi
+
+if [ $VERSION -eq 1 ]
+then
+	echo -e "$SCRIPT_VERSION\n"
 	exit 0
 fi
 
 if [ -z $RESOURCE_GROUP ]; then
 	echo -e "Error: Resource group value must be provided. \n"
-	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-h|--help]\n"
+	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-r|--region] [-h|--help] [--version]\n"
 	exit 7
 fi
 
 if [ -z $CLUSTER_NAME ]; then
 	echo -e "Error: Cluster name value must be provided. \n"
-	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-h|--help]\n"
+	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-r|--region] [-h|--help] [--version]\n"
 	exit 8
 fi
 
 if [ -z $LAB_SCENARIO ]; then
 	echo -e "Error: Lab scenario value must be provided. \n"
-	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-h|--help]\n"
+	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-r|--region] [-h|--help] [--version]\n"
     echo -e "\nHere is the list of current labs available:\n
 ***************************************************************
 *\t 1. Node not ready
