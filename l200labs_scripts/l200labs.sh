@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # script name: l200labs.sh
-# Version v0.2.23 20191224
+# Version v0.2.24 20191224
 # Set of tools to deploy L200 Azure containers labs
 
 # "-g|--resource-group" resource group name
@@ -13,7 +13,7 @@
 # "--version" print version
 
 # read the options
-TEMP=`getopt -o g:n:l:hrv --long resource-group:,name:,lab:,help,validate,version -n 'l200labs.sh' -- "$@"`
+TEMP=`getopt -o g:n:l:r:hv --long resource-group:,name:,lab:,region:,help,validate,version -n 'l200labs.sh' -- "$@"`
 eval set -- "$TEMP"
 
 # set an initial value for the flags
@@ -55,7 +55,7 @@ done
 # Variable definition
 SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
 SCRIPT_NAME="$(echo $0 | sed 's|\.\/||g')"
-SCRIPT_VERSION="Version v0.2.23 20191224"
+SCRIPT_VERSION="Version v0.2.24 20191224"
 
 # Funtion definition
 
