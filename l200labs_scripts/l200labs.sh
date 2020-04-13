@@ -10,10 +10,11 @@
 # "-v|--validate" Validate a particular scenario
 # "-r|--region" region to deploy the resources
 # "-h|--help" help info
+# "-s|--size" vm size
 # "--version" print version
 
 # read the options
-TEMP=`getopt -o g:n:l:r:hv --long resource-group:,name:,lab:,region:,help,validate,version -n 'l200labs.sh' -- "$@"`
+TEMP=`getopt -o g:n:l:r:s:hv --long resource-group:,name:,lab:,region:,size:,help,validate,version -n 'l200labs.sh' -- "$@"`
 eval set -- "$TEMP"
 
 # set an initial value for the flags
@@ -23,6 +24,7 @@ LAB_SCENARIO=""
 LOCATION="eastus2"
 VALIDATE=0
 HELP=0
+VM_SIZE=""
 VERSION=0
 
 while true ;
@@ -41,10 +43,14 @@ do
             "") shift 2;;
             *) LAB_SCENARIO="$2"; shift 2;;
             esac;;
+        -s|--size) case "$2" in
+            "") shift 2;;
+            *) VM_SIZE="$2"; shift 2;;
+            esac;;
         -r|--region) case "$2" in
             "") shift 2;;
             *) LOCATION="$2"; shift 2;;
-            esac;;    
+            esac;;
         -v|--validate) VALIDATE=1; shift;;
         --version) VERSION=1; shift;;
         --) shift ; break ;;
@@ -55,7 +61,7 @@ done
 # Variable definition
 SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
 SCRIPT_NAME="$(echo $0 | sed 's|\.\/||g')"
-SCRIPT_VERSION="Version v0.2.25 20191224"
+SCRIPT_VERSION="Special Version during COViD19 - 20200410"
 
 # Funtion definition
 
@@ -98,24 +104,45 @@ function validate_cluster_exists () {
     fi
 }
 
+function validate_sp_exists () {
+    SP_NAME="$1"
+    SP_EXIST=$(az ad sp delete --id http://$SP_NAME &>/dev/null; echo $?)
+
+}
 # Lab scenario 1
 function lab_scenario_1 () {
     echo -e "Deploying cluster for lab1...\n"
+
+    validate_sp_exists "SP_$RESOURCE_GROUP"
+
+    SP=$(az ad sp create-for-rbac -n "SP_$RESOURCE_GROUP" --skip-assignment --output json)
+    SP_ID=$(echo $SP | jq -r .appId)
+    SP_SECRET=$(echo $SP | jq -r .password)
+
+    echo -e "SP_ID " $SP_ID
+    echo -e "SP_SECRET" $SP_SECRET
+
+    sleep 5s
+
     az aks create \
     --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
+    --node-vm-size $VM_SIZE \
     --location $LOCATION \
     --vm-set-type AvailabilitySet \
-    --node-count 3 \
+    --node-count 2 \
+    --service-principal $SP_ID\
+    --client-secret $SP_SECRET \
     --generate-ssh-keys \
     --tag l200lab=${LAB_SCENARIO} \
     -o table
 
     validate_cluster_exists
 
+
     echo -e "Getting kubectl credentials for the cluster...\n"
     az aks get-credentials -g "$RESOURCE_GROUP" -n "$CLUSTER_NAME"
-    
+
     NODE_RESOURCE_GROUP="$(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query nodeResourceGroup -o tsv)"
     VM_NODE_0="$(az vm list -g $NODE_RESOURCE_GROUP --query [0].name -o tsv)"
     echo -e "\n\nPlease wait while we are preparing the environment for you to troubleshoot..."
@@ -159,19 +186,32 @@ function lab_scenario_2 () {
     --subnet-name customsubnetlab2 \
     --subnet-prefixes 20.0.0.0/26 &>/dev/null
     SUBNET_ID="$(az network vnet show -g $RESOURCE_GROUP -n customvnetlab2 --query subnets[0].id -o tsv)"
+
+    validate_sp_exists "SP_$RESOURCE_GROUP"
+
+    SP=$(az ad sp create-for-rbac -n "SP_$RESOURCE_GROUP" --skip-assignment --output json)
+    SP_ID=$(echo $SP | jq -r .appId)
+    SP_SECRET=$(echo $SP | jq -r .password)
+    echo "SP_ID" $SP_ID
+    echo "SP_SECRET" $SP_SECRET
+    sleep 5s
+
     az aks create --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
+     --node-vm-size $VM_SIZE \
     --location $LOCATION \
     --vm-set-type AvailabilitySet \
     --generate-ssh-keys \
-    -c 1 -s Standard_B2ms \
+    -c 1  \
+    --service-principal $SP_ID\
+    --client-secret $SP_SECRET \
     --network-plugin azure \
     --vnet-subnet-id  $SUBNET_ID \
     --tag l200lab=${LAB_SCENARIO} \
     -o table
 
     validate_cluster_exists
-    az aks scale -g $RESOURCE_GROUP -n $CLUSTER_NAME -c 4 &> /dev/null
+    az aks scale -g $RESOURCE_GROUP -n $CLUSTER_NAME -c 2 &> /dev/null
     az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME &>/dev/null
     CLUSTER_URI="$(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query id -o tsv)"
     echo -e "\n\n********************************************************"
@@ -202,14 +242,26 @@ function lab_scenario_2_validation () {
 
 # Lab scenario 3
 function lab_scenario_3 () {
+
+    SP=$(az ad sp create-for-rbac -n "SP_$RESOURCE_GROUP" --skip-assignment --output json)
+    SP_ID=$(echo $SP | jq -r .appId)
+    SP_SECRET=$(echo $SP | jq -r .password)
+    echo "SP_ID" $SP_ID
+    echo "SP_SECRET" $SP_SECRET
+    sleep 5s
+
+
     az aks create \
     --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
+    --node-vm-size $VM_SIZE \
     --location $LOCATION \
     --vm-set-type AvailabilitySet \
     --node-count 1 \
     --generate-ssh-keys \
     --tag l200lab=${LAB_SCENARIO} \
+    --service-principal $SP_ID\
+    --client-secret $SP_SECRET \
     -o table
 
     validate_cluster_exists
@@ -255,14 +307,26 @@ function lab_scenario_3_validation () {
 
 # Lab scenario 4
 function lab_scenario_4 () {
+
+    SP=$(az ad sp create-for-rbac -n "SP_$RESOURCE_GROUP" --skip-assignment --output json)
+    SP_ID=$(echo $SP | jq -r .appId)
+    SP_SECRET=$(echo $SP | jq -r .password)
+    echo "SP_ID" $SP_ID
+    echo "SP_SECRET" $SP_SECRET
+    sleep 5s
+
+
     az aks create \
     --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
     --location $LOCATION \
     --node-count 1 \
+    --node-vm-size $VM_SIZE \
     --vm-set-type AvailabilitySet \
     --generate-ssh-keys \
     --tag l200lab=${LAB_SCENARIO} \
+    --service-principal $SP_ID\
+    --client-secret $SP_SECRET \
     -o table
 
     validate_cluster_exists
@@ -291,16 +355,28 @@ function lab_scenario_4_validation () {
     else
         echo -e "\nError: Cluster $CLUSTER_NAME in resource group $RESOURCE_GROUP was not created with this tool for lab $LAB_SCENARIO and cannot be validated...\n"
         exit 6
-    fi    
+    fi
 }
 
 # Lab scenario 5
 function lab_scenario_5 () {
+
+    SP=$(az ad sp create-for-rbac -n "SP_$RESOURCE_GROUP" --skip-assignment --output json)
+    SP_ID=$(echo $SP | jq -r .appId)
+    SP_SECRET=$(echo $SP | jq -r .password)
+    echo "SP_ID" $SP_ID
+    echo "SP_SECRET" $SP_SECRET
+    sleep 5s
+
+
     az aks create \
     --resource-group $RESOURCE_GROUP \
     --name $CLUSTER_NAME \
     --location $LOCATION \
     --node-count 1 \
+    --node-vm-size $VM_SIZE \
+    --service-principal $SP_ID\
+    --client-secret $SP_SECRET \
     --vm-set-type AvailabilitySet \
     --generate-ssh-keys \
     --tag l200lab=${LAB_SCENARIO} \
@@ -344,7 +420,8 @@ function lab_scenario_5_validation () {
 #if -h | --help option is selected usage will be displayed
 if [ $HELP -eq 1 ]
 then
-	echo "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-r|--region] [-h|--help] [--version]"
+    echo "special version during CoviD, when quota limited in most of the region"
+	echo "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-r|--region] [-s|--size] [-h|--help] [--version]"
     echo -e "\nHere is the list of current labs available:\n
 ***************************************************************
 *\t 1. Node not ready
@@ -357,6 +434,7 @@ then
 "-n|--name" AKS cluster name
 "-l|--lab" Lab scenario to deploy (5 possible options)
 "-r|--region" region to create the resources
+"-s|--node-vm-size" AKS node size
 "-v|--validate" Validate a particular scenario
 "--version" print version of l200labs
 "-h|--help" help info\n'
@@ -371,19 +449,19 @@ fi
 
 if [ -z $RESOURCE_GROUP ]; then
 	echo -e "Error: Resource group value must be provided. \n"
-	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-r|--region] [-h|--help] [--version]\n"
+	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-r|--region] [-s|--size] [-h|--help] [--version]\n"
 	exit 7
 fi
 
 if [ -z $CLUSTER_NAME ]; then
 	echo -e "Error: Cluster name value must be provided. \n"
-	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-r|--region] [-h|--help] [--version]\n"
+	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-r|--region] [-s|--size] [-h|--help] [--version]\n"
 	exit 8
 fi
 
 if [ -z $LAB_SCENARIO ]; then
 	echo -e "Error: Lab scenario value must be provided. \n"
-	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-r|--region] [-h|--help] [--version]\n"
+	echo -e "l200labs usage: l200labs -g <RESOURCE_GROUP> -n <CLUSTER_NAME> -l <LAB#> [-v|--validate] [-r|--region] [-s|--size] [-h|--help] [--version]\n"
     echo -e "\nHere is the list of current labs available:\n
 ***************************************************************
 *\t 1. Node not ready
