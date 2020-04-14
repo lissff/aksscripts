@@ -211,7 +211,7 @@ function lab_scenario_2 () {
     -o table
 
     validate_cluster_exists
-    az aks scale -g $RESOURCE_GROUP -n $CLUSTER_NAME -c 2 &> /dev/null
+    az aks scale -g $RESOURCE_GROUP -n $CLUSTER_NAME -c 2 
     az aks get-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME &>/dev/null
     CLUSTER_URI="$(az aks show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query id -o tsv)"
     echo -e "\n\n********************************************************"
